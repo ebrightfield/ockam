@@ -6,7 +6,7 @@ use rand::prelude::random;
 use anyhow::{anyhow, Context as _};
 use std::{
     net::{IpAddr, SocketAddr},
-    path::{Path, PathBuf},
+    path::PathBuf,
     str::FromStr,
 };
 use tracing::error;
@@ -81,8 +81,8 @@ pub struct CreateCommand {
     /// This argument is currently ignored on background nodes.  Node
     /// configuration is run asynchronously and may take several
     /// seconds to complete.
-    #[arg(long, hide = true)]
-    pub launch_config: Option<PathBuf>,
+    #[arg(long, hide = true, value_parser=parse_launch_config)]
+    pub launch_config: Option<Config>,
 
     #[arg(long, hide = true)]
     pub project: Option<PathBuf>,
@@ -138,6 +138,20 @@ impl CreateCommand {
             ..cmd
         })
     }
+}
+
+/// Clap argument parser, takes either a path to a launch config, or
+/// a JSON string.
+fn parse_launch_config(config_or_path: &str) -> anyhow::Result<Config> {
+    let maybe_config: anyhow::Result<Config> = serde_json::from_str(config_or_path)
+        .map_err(|_| anyhow!("Not a launch config JSON string"));
+    println!("{:?}", maybe_config);
+    if maybe_config.is_ok() {
+        return maybe_config;
+    }
+    let path = PathBuf::from_str(config_or_path).map_err(|_| anyhow!("Not a valid path"))?;
+    println!("{:?}", path);
+    Config::read(path)
 }
 
 async fn run_impl(
@@ -281,15 +295,14 @@ async fn run_foreground_node(
 async fn start_services(
     ctx: &Context,
     tcp: &TcpTransport,
-    cfg: &Path,
+    cfg: &Config,
     addr: SocketAddr,
     node_opts: super::NodeOpts,
     opts: &CommandGlobalOpts,
 ) -> anyhow::Result<()> {
     let config = {
-        let c = Config::read(cfg)?;
-        if let Some(sc) = c.startup_services {
-            sc
+        if let Some(sc) = &cfg.startup_services {
+            sc.clone()
         } else {
             return Ok(());
         }
