@@ -145,12 +145,10 @@ impl CreateCommand {
 fn parse_launch_config(config_or_path: &str) -> anyhow::Result<Config> {
     let maybe_config: anyhow::Result<Config> = serde_json::from_str(config_or_path)
         .map_err(|_| anyhow!("Not a launch config JSON string"));
-    println!("{:?}", maybe_config);
     if maybe_config.is_ok() {
         return maybe_config;
     }
     let path = PathBuf::from_str(config_or_path).map_err(|_| anyhow!("Not a valid path"))?;
-    println!("{:?}", path);
     Config::read(path)
 }
 
