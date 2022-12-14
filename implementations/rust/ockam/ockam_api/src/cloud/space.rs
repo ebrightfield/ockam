@@ -91,6 +91,7 @@ mod node {
                 "create_space",
                 cloud_route,
                 "spaces",
+                None,
                 req_builder,
             )
             .await
@@ -108,7 +109,7 @@ mod node {
             trace!(target: TARGET, "listing spaces");
 
             let req_builder = Request::get("/v0/");
-            self.request_controller(ctx, label, None, cloud_route, "spaces", req_builder)
+            self.request_controller(ctx, label, None, cloud_route, "spaces", None, req_builder)
                 .await
         }
 
@@ -125,7 +126,7 @@ mod node {
             trace!(target: TARGET, space = %id, space = %id, "getting space");
 
             let req_builder = Request::get(format!("/v0/{id}"));
-            self.request_controller(ctx, label, None, cloud_route, "spaces", req_builder)
+            self.request_controller(ctx, label, None, cloud_route, "spaces", None, req_builder)
                 .await
         }
 
@@ -142,7 +143,7 @@ mod node {
             trace!(target: TARGET, space = %id, "deleting space");
 
             let req_builder = Request::delete(format!("/v0/{id}"));
-            self.request_controller(ctx, label, None, cloud_route, "spaces", req_builder)
+            self.request_controller(ctx, label, None, cloud_route, "spaces", None, req_builder)
                 .await
         }
     }

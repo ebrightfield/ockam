@@ -53,7 +53,7 @@ mod node {
             trace!(target: TARGET, project_id, "listing addons");
 
             let req_builder = Request::get(format!("/v0/{project_id}/addons"));
-            self.request_controller(ctx, label, None, cloud_route, API_SERVICE, req_builder)
+            self.request_controller(ctx, label, None, cloud_route, API_SERVICE, None, req_builder)
                 .await
         }
 
@@ -84,7 +84,7 @@ mod node {
             trace!(target: TARGET, project_id, "configuring okta addon");
 
             let req_builder = Request::put(format!("/v0/{project_id}/addons/okta")).body(req_body);
-            self.request_controller(ctx, label, None, cloud_route, API_SERVICE, req_builder)
+            self.request_controller(ctx, label, None, cloud_route, API_SERVICE, None, req_builder)
                 .await
         }
 
@@ -102,7 +102,7 @@ mod node {
             trace!(target: TARGET, project_id, addon_id, "disabling addon");
 
             let req_builder = Request::delete(format!("/v0/{project_id}/addons/{addon_id}"));
-            self.request_controller(ctx, label, None, cloud_route, API_SERVICE, req_builder)
+            self.request_controller(ctx, label, None, cloud_route, API_SERVICE, None, req_builder)
                 .await
         }
     }

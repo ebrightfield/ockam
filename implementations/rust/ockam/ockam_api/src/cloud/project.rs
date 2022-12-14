@@ -307,6 +307,7 @@ mod node {
                 "create_project",
                 cloud_route,
                 "projects",
+                None,
                 req_builder,
             )
             .await
@@ -324,7 +325,7 @@ mod node {
             trace!(target: TARGET, "listing projects");
 
             let req_builder = Request::get("/v0");
-            self.request_controller(ctx, label, None, cloud_route, "projects", req_builder)
+            self.request_controller(ctx, label, None, cloud_route, "projects", None, req_builder)
                 .await
         }
 
@@ -341,7 +342,7 @@ mod node {
             trace!(target: TARGET, %project_id, "getting project");
 
             let req_builder = Request::get(format!("/v0/{project_id}"));
-            self.request_controller(ctx, label, None, cloud_route, "projects", req_builder)
+            self.request_controller(ctx, label, None, cloud_route, "projects", None, req_builder)
                 .await
         }
 
@@ -359,7 +360,7 @@ mod node {
             trace!(target: TARGET, %space_id, %project_id, "deleting project");
 
             let req_builder = Request::delete(format!("/v0/{space_id}/{project_id}"));
-            self.request_controller(ctx, label, None, cloud_route, "projects", req_builder)
+            self.request_controller(ctx, label, None, cloud_route, "projects", None, req_builder)
                 .await
         }
 
@@ -377,7 +378,7 @@ mod node {
             trace!(target: TARGET, %project_id, "adding enroller");
 
             let req_builder = Request::post(format!("/v0/{project_id}/enrollers")).body(req_body);
-            self.request_controller(ctx, label, None, cloud_route, "projects", req_builder)
+            self.request_controller(ctx, label, None, cloud_route, "projects", None, req_builder)
                 .await
         }
 
@@ -394,7 +395,7 @@ mod node {
             trace!(target: TARGET, %project_id, "listing enrollers");
 
             let req_builder = Request::get(format!("/v0/{project_id}/enrollers"));
-            self.request_controller(ctx, label, None, cloud_route, "projects", req_builder)
+            self.request_controller(ctx, label, None, cloud_route, "projects", None, req_builder)
                 .await
         }
 
@@ -413,7 +414,7 @@ mod node {
 
             let req_builder =
                 Request::delete(format!("/v0/{project_id}/enrollers/{enroller_identity_id}"));
-            self.request_controller(ctx, label, None, cloud_route, "projects", req_builder)
+            self.request_controller(ctx, label, None, cloud_route, "projects", None, req_builder)
                 .await
         }
     }

@@ -54,6 +54,7 @@ mod node {
                 None,
                 cloud_route,
                 api_service,
+                None,
                 req_builder,
             )
             .await
@@ -80,6 +81,7 @@ mod node {
                 "request_enrollment_token",
                 cloud_route,
                 "projects",
+                None,
                 req_builder,
             )
             .await
@@ -104,6 +106,7 @@ mod node {
                 None,
                 cloud_route,
                 api_service,
+                None,
                 req_builder,
             )
             .await

@@ -72,9 +72,10 @@ mod node {
 
     use ockam_core::api::RequestBuilder;
     use ockam_core::{self, route, Address, Result, Route};
-    use ockam_identity::{IdentityIdentifier, TrustIdentifierPolicy};
+    use ockam_identity::{Identity, IdentityIdentifier, TrustIdentifierPolicy};
     use ockam_node::api::request;
     use ockam_node::Context;
+    use ockam_vault::Vault;
 
     use crate::cloud::OCKAM_CONTROLLER_IDENTITY_ID;
     use crate::error::ApiError;
@@ -116,8 +117,12 @@ mod node {
         }
 
         /// Returns a secure channel between the node and the controller.
-        async fn controller_secure_channel(&mut self, route: impl Into<Route>) -> Result<Address> {
-            let identity = self.identity()?;
+        async fn controller_secure_channel(
+            &mut self,
+            route: impl Into<Route>,
+            identity: Option<&Identity<Vault>>,
+        ) -> Result<Address> {
+            let identity = identity.unwrap_or(self.identity()?);
             let route = route.into();
             // Create secure channel for the given route using the orchestrator identity.
             trace!(target: TARGET, %route, "Creating orchestrator secure channel");
@@ -141,6 +146,7 @@ mod node {
             schema: impl Into<Option<&str>>,
             cloud_route: impl Into<Route>,
             api_service: &str,
+            identity: Option<&Identity<Vault>>,
             req: RequestBuilder<'_, T>,
         ) -> Result<Vec<u8>>
         where
@@ -148,7 +154,7 @@ mod node {
         {
             let mut node_manger = self.get().write().await;
             let cloud_route = cloud_route.into();
-            let sc = node_manger.controller_secure_channel(cloud_route).await?;
+            let sc = node_manger.controller_secure_channel(cloud_route, identity).await?;
             let route = route![&sc.to_string(), api_service];
             let res = request(ctx, label, schema, route, req).await;
             ctx.stop_worker(sc).await?;
