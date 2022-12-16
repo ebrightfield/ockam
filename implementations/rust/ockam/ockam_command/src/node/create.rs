@@ -159,9 +159,8 @@ fn parse_launch_config(config_or_path: &str) -> anyhow::Result<Config> {
 
 // NOTE: Parsing a `ProjectInfo` causes lifetime annotations to propagate
 //  into an async runtime, where it assumes static. It also propagates them all the way
-//  up through the composed Clap (sub-)command structs. So this refactor
+//  up through the composed Clap (sub-)command structs. So refactoring this argument
 //  turns out to be less straightforward.
-//
 // fn parse_project(info_or_path: & str) -> anyhow::Result<ProjectInfo> {
 //     let maybe_info: Result<ProjectInfo, _> = serde_json::from_str(&info_or_path);
 //     if let Ok(info) = maybe_info {
