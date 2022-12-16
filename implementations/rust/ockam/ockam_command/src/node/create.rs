@@ -148,14 +148,15 @@ impl CreateCommand {
 /// Clap argument parser, takes either a path to a launch config, or
 /// a JSON string.
 fn parse_launch_config(config_or_path: &str) -> anyhow::Result<Config> {
-    let maybe_config: anyhow::Result<Config> = serde_json::from_str(config_or_path)
-        .map_err(|_| anyhow!("Not a launch config JSON string"));
-    if maybe_config.is_ok() {
-        return maybe_config;
+    match serde_json::from_str::<Config>(config_or_path) {
+        Ok(c) => Ok(c),
+        Err(_) => {
+            let path = PathBuf::from_str(config_or_path).context(anyhow!("Not a valid path"))?;
+            Config::read(path)
+        }
     }
-    let path = PathBuf::from_str(config_or_path).map_err(|_| anyhow!("Not a valid path"))?;
-    Config::read(path)
 }
+
 
 // NOTE: Parsing a `ProjectInfo` causes lifetime annotations to propagate
 //  into an async runtime, where it assumes static. It also propagates them all the way
