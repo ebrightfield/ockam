@@ -4,11 +4,7 @@ use ockam_identity::credential::Credential;
 use rand::prelude::random;
 
 use anyhow::{anyhow, Context as _};
-use std::{
-    net::{IpAddr, SocketAddr},
-    path::PathBuf,
-    str::FromStr,
-};
+use std::{fs, net::{IpAddr, SocketAddr}, path::PathBuf, str::FromStr};
 use tracing::error;
 
 use crate::node::util::{random_node_name, spawn_node};
@@ -16,7 +12,12 @@ use crate::secure_channel::listener::create as secure_channel_listener;
 use crate::service::config::Config;
 use crate::service::start;
 use crate::util::node_rpc;
-use crate::util::{bind_to_port_check, embedded_node_that_is_not_stopped, exitcode};
+use crate::util::{
+    bind_to_port_check,
+    embedded_node_that_is_not_stopped,
+    exitcode,
+    arg_parse::parse_tcp_addr
+};
 use crate::{
     help, node::show::print_query_status, node::HELP_DETAIL, project, util::find_available_port,
     CommandGlobalOpts,
@@ -66,7 +67,8 @@ pub struct CreateCommand {
         long,
         short,
         id = "SOCKET_ADDRESS",
-        default_value = "127.0.0.1:0"
+        default_value = "127.0.0.1:0",
+        value_parser = parse_tcp_addr,
     )]
     pub tcp_listener_address: String,
 
@@ -156,13 +158,18 @@ fn parse_launch_config(config_or_path: &str) -> anyhow::Result<Config> {
 }
 
 // NOTE: Parsing a `ProjectInfo` causes lifetime annotations to propagate
-//  into an async runtime that requires a static lifetime. So this refactor
-//  turns out to be less straightforward, will revisit.
+//  into an async runtime, where it assumes static. It also propagates them all the way
+//  up through the composed Clap (sub-)command structs. So this refactor
+//  turns out to be less straightforward.
 //
-// fn parse_project(info_or_path: &str) -> anyhow::Result<ProjectInfo> {
-//     let maybe_info: anyhow::Result<ProjectInfo> = serde_json::from_str(&info_or_path);
-//     let s = tokio::fs::read_to_string(path).await?;
-//     let p: ProjectInfo = serde_json::from_str(&s)?;
+// fn parse_project(info_or_path: & str) -> anyhow::Result<ProjectInfo> {
+//     let maybe_info: Result<ProjectInfo, _> = serde_json::from_str(&info_or_path);
+//     if let Ok(info) = maybe_info {
+//         return Ok(info);
+//     }
+//     let s = fs::read_to_string(info_or_path)?;
+//     serde_json::from_str(&s)
+//         .map_err(|_| anyhow!("Unable to read file {}", info_or_path))
 // }
 
 async fn run_impl(
