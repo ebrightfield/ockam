@@ -31,6 +31,7 @@ pub mod exitcode;
 
 mod config;
 pub(crate) mod output;
+pub(crate) mod arg_parse;
 
 pub const DEFAULT_CONTROLLER_ADDRESS: &str = "/dnsaddr/orchestrator.ockam.io/tcp/6252/service/api";
 

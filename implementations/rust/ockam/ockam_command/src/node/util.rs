@@ -19,11 +19,17 @@ use ockam_api::nodes::{NodeManager, NodeManagerWorker, NODEMANAGER_ADDR};
 use ockam_multiaddr::MultiAddr;
 use ockam_vault::Vault;
 
-use crate::node::CreateCommand;
 use crate::project::ProjectInfo;
 use crate::CommandGlobalOpts;
-use crate::{project, OckamConfig};
+use crate::node::create::DEFAULT_TCP_LISTENER_ADDR;
+use crate::OckamConfig;
 
+/// For generating a new node name if it's not manually supplied.
+pub fn random_node_name() -> String {
+    hex::encode(random::<[u8; 4]>())
+}
+
+/// Starts an embedded node with no vault or identity
 pub async fn start_embedded_node(
     ctx: &Context,
     opts: &CommandGlobalOpts,
@@ -31,6 +37,8 @@ pub async fn start_embedded_node(
     start_embedded_node_with_vault_and_identity(ctx, opts, None, None).await
 }
 
+/// Uses the default parameters of the [crate::node::create::CreateCommand]
+/// where applicable.
 pub async fn start_embedded_node_with_vault_and_identity(
     ctx: &Context,
     opts: &CommandGlobalOpts,
@@ -38,36 +46,22 @@ pub async fn start_embedded_node_with_vault_and_identity(
     identity: Option<&String>,
 ) -> anyhow::Result<String> {
     let cfg = &opts.config;
-    let cmd = CreateCommand::default();
+    let node_name = random_node_name();
 
-    // This node was initially created as a foreground node
-    if !cmd.child_process {
-        init_node_state(ctx, opts, &cmd.node_name, vault, identity).await?;
-    }
-
-    let project_id = match &cmd.project {
-        Some(path) => {
-            let s = tokio::fs::read_to_string(path).await?;
-            let p: ProjectInfo = serde_json::from_str(&s)?;
-            let project_id = p.id.to_string();
-            project::config::set_project(cfg, &(&p).into()).await?;
-            add_project_authority(p, &cmd.node_name, cfg).await?;
-            Some(project_id)
-        }
-        None => None,
-    };
+    // This node is not a child process, no need for if-statement
+    init_node_state(ctx, opts, &node_name, vault, identity).await?;
 
     let tcp = TcpTransport::create(ctx).await?;
-    let bind = cmd.tcp_listener_address;
+    let bind = DEFAULT_TCP_LISTENER_ADDR.to_string();
     tcp.listen(&bind).await?;
 
     let projects = cfg.inner().lookup().projects().collect();
     let node_man = NodeManager::create(
         ctx,
-        NodeManagerGeneralOptions::new(cmd.node_name.clone(), cmd.launch_config.is_some()),
+        NodeManagerGeneralOptions::new(node_name.clone(), false),
         NodeManagerProjectsOptions::new(
-            Some(&cfg.authorities(&cmd.node_name)?.snapshot()),
-            project_id,
+            Some(&cfg.authorities(&node_name)?.snapshot()),
+            None,
             projects,
             None,
         ),
@@ -80,7 +74,7 @@ pub async fn start_embedded_node_with_vault_and_identity(
     ctx.start_worker(NODEMANAGER_ADDR, node_manager_worker)
         .await?;
 
-    Ok(cmd.node_name.clone())
+    Ok(node_name)
 }
 
 pub(super) async fn init_node_state(

@@ -11,7 +11,7 @@ use std::{
 };
 use tracing::error;
 
-use crate::node::util::spawn_node;
+use crate::node::util::{random_node_name, spawn_node};
 use crate::secure_channel::listener::create as secure_channel_listener;
 use crate::service::config::Config;
 use crate::service::start;
@@ -45,6 +45,8 @@ use ockam_core::{
 };
 
 use super::util::delete_node;
+
+pub const DEFAULT_TCP_LISTENER_ADDR: &str = "127.0.0.1:0";
 
 /// Create node
 #[derive(Clone, Debug, Args)]
@@ -84,6 +86,7 @@ pub struct CreateCommand {
     #[arg(long, hide = true, value_parser=parse_launch_config)]
     pub launch_config: Option<Config>,
 
+    // TODO Revisit this, passing the ProjectInfo into the async runtime
     #[arg(long, hide = true)]
     pub project: Option<PathBuf>,
 
@@ -97,8 +100,8 @@ pub struct CreateCommand {
 impl Default for CreateCommand {
     fn default() -> Self {
         Self {
-            node_name: hex::encode(random::<[u8; 4]>()),
-            tcp_listener_address: "127.0.0.1:0".to_string(),
+            node_name: random_node_name(),
+            tcp_listener_address: DEFAULT_TCP_LISTENER_ADDR.to_string(),
             foreground: false,
             child_process: false,
             launch_config: None,
@@ -151,6 +154,16 @@ fn parse_launch_config(config_or_path: &str) -> anyhow::Result<Config> {
     let path = PathBuf::from_str(config_or_path).map_err(|_| anyhow!("Not a valid path"))?;
     Config::read(path)
 }
+
+// NOTE: Parsing a `ProjectInfo` causes lifetime annotations to propagate
+//  into an async runtime that requires a static lifetime. So this refactor
+//  turns out to be less straightforward, will revisit.
+//
+// fn parse_project(info_or_path: &str) -> anyhow::Result<ProjectInfo> {
+//     let maybe_info: anyhow::Result<ProjectInfo> = serde_json::from_str(&info_or_path);
+//     let s = tokio::fs::read_to_string(path).await?;
+//     let p: ProjectInfo = serde_json::from_str(&s)?;
+// }
 
 async fn run_impl(
     ctx: Context,

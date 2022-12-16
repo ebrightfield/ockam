@@ -1,5 +1,5 @@
 use crate::{
-    util::{api, extract_address_value, node_rpc, Rpc},
+    util::{api, extract_address_value, node_rpc, Rpc, arg_parse::parse_tcp_addr},
     CommandGlobalOpts, OutputFormat,
 };
 use anyhow::Context;
@@ -30,7 +30,7 @@ pub struct CreateCommand {
     node_opts: TcpConnectionNodeOpts,
 
     /// The address to connect to (required)
-    #[arg(id = "to", short, long, value_name = "ADDRESS")]
+    #[arg(id = "to", short, long, value_name = "ADDRESS", value_parser=parse_tcp_addr)]
     pub address: String,
 }
 

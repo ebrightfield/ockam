@@ -1,6 +1,7 @@
 use crate::util::extract_address_value;
 use crate::util::node_rpc;
 use crate::util::Rpc;
+use crate::util::arg_parse::parse_tcp_addr;
 use crate::CommandGlobalOpts;
 use anyhow::Context;
 use clap::Args;
@@ -13,6 +14,7 @@ pub struct CreateCommand {
     node_opts: TCPListenerNodeOpts,
 
     /// Address for this listener (eg. 127.0.0.1:7000)
+    #[arg(value_parser=parse_tcp_addr)]
     pub address: String,
 }
 

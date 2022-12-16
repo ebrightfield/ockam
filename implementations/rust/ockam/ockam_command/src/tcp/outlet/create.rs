@@ -2,6 +2,7 @@ use crate::util::{extract_address_value, node_rpc, Rpc};
 use crate::{help, CommandGlobalOpts};
 use anyhow::ensure;
 use clap::Args;
+use crate::util::arg_parse::parse_tcp_addr;
 use ockam::Context;
 use ockam_api::{
     error::ApiError,
@@ -43,7 +44,7 @@ pub struct CreateCommand {
     at: String,
 
     /// Address of the tcp outlet.
-    #[arg(long, display_order = 901, id = "OUTLET_ADDRESS")]
+    #[arg(long, display_order = 901, id = "OUTLET_ADDRESS", value_parser=parse_tcp_addr)]
     from: String,
 
     /// TCP address to send raw tcp traffic.
