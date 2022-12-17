@@ -264,6 +264,23 @@ impl IdentitiesState {
         Ok(IdentityState { path, config })
     }
 
+    pub fn list(&self) -> Result<Vec<IdentityState>> {
+        let mut identities = vec![];
+        for entry in std::fs::read_dir(&self.dir)? {
+            let entry = entry?;
+            if entry.file_type()?.is_dir() {
+                let name = entry.file_name().into_string().map_err(|_| {
+                    CliStateError::Io(std::io::Error::new(
+                        std::io::ErrorKind::InvalidData,
+                        "node's directory has an invalid name",
+                    ))
+                })?;
+                identities.push(self.get(&name)?);
+            }
+        }
+        Ok(identities)
+    }
+
     pub fn default_path(&self) -> Result<PathBuf> {
         Ok(CliState::defaults_dir()?.join("identity"))
     }
