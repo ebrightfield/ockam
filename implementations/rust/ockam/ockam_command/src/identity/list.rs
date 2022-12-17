@@ -1,10 +1,11 @@
-use crate::util::{api, exitcode, node_rpc, RpcBuilder};
+use crate::util::{api, exitcode, extract_address_value, node_rpc, Rpc, RpcBuilder};
 use crate::{help, node::show::print_query_status, node::HELP_DETAIL, CommandGlobalOpts};
 use anyhow::{anyhow, Context as _};
 use clap::Args;
 use ockam::{Context, TcpTransport};
 use std::time::Duration;
-use ockam_api::nodes::models::identity::LongIdentityResponse;
+use ockam_api::nodes::models::identity::{LongIdentityResponse, ShortIdentityResponse};
+use ockam_core::api::Request;
 
 /// List nodes
 #[derive(Clone, Debug, Args)]
@@ -35,43 +36,23 @@ async fn run_impl(
         }
         identity_states.iter().map(|id| id.config.identifier.to_string()).collect()
     };
-    // let tcp = TcpTransport::create(&ctx).await?;
+    let tcp = TcpTransport::create(&ctx).await?;
     // verify_pids(&ctx, &opts, &tcp, &identity_names).await?;
-    let response = LongIdentityResponse::new()
 
-    // Print node states
-    for node_name in &identity_names {
-        let mut rpc = RpcBuilder::new(&ctx, &opts, node_name).tcp(&tcp)?.build();
-        print_query_status(&mut rpc, node_name, false).await?;
-    }
-
-    Ok(())
-}
-
-/// Update the persisted configuration data with the pids
-/// responded by nodes.
-async fn verify_pids(
-    ctx: &Context,
-    opts: &CommandGlobalOpts,
-    tcp: &TcpTransport,
-    nodes: &Vec<String>,
-) -> crate::Result<()> {
-    for node_name in nodes {
-        if let Ok(node_state) = opts.state.nodes.get(node_name) {
-            let mut rpc = RpcBuilder::new(ctx, opts, node_name).tcp(tcp)?.build();
-            if rpc
-                .request_with_timeout(api::query_status(), Duration::from_millis(200))
-                .await
-                .is_ok()
-            {
-                let resp = rpc.parse_response::<NodeStatus>()?;
-                if node_state.pid()? != Some(resp.pid) {
-                    node_state
-                        .set_pid(resp.pid)
-                        .context("Failed to update pid for node {node_name}")?;
-                }
-            }
+    // Print identity states
+    let node_name = extract_address_value(&cmd.node_opts.api_node)?;
+    for identity in &identity_names {
+        let mut rpc = Rpc::background(&ctx, &opts, &node_name)?;
+        if cmd.full {
+            let req = Request::post("/node/identity/actions/show/long");
+            rpc.request(req).await?;
+            rpc.parse_and_print_response::<LongIdentityResponse>()?;
+        } else {
+            let req = Request::post("/node/identity/actions/show/short");
+            rpc.request(req).await?;
+            rpc.parse_and_print_response::<ShortIdentityResponse>()?;
         }
     }
+
     Ok(())
 }
