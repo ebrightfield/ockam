@@ -100,7 +100,7 @@ teardown() {
   run $OCKAM node create n1
   assert_success
 
-  run $OCKAM identity show --node n1
+  run $OCKAM identity show n1
   assert_success
   assert_output --regexp '^P'
 }
@@ -109,7 +109,7 @@ teardown() {
   run $OCKAM node create n1
   assert_success
 
-  run $OCKAM identity show --full --node n1
+  run $OCKAM identity show --full n1
   assert_success
   assert_output --partial "Change History"
   assert_output --partial "identifier"
@@ -445,12 +445,12 @@ teardown() {
   export OCKAM_HOME=/tmp/ockam/green
   run $OCKAM node create green --project /tmp/project.json
   assert_success
-  green_identifier=$($OCKAM identity show -n green)
+  green_identifier=$($OCKAM identity show green)
 
   export OCKAM_HOME=/tmp/ockam/blue
   run $OCKAM node create blue --project /tmp/project.json
   assert_success
-  blue_identifier=$($OCKAM identity show -n blue)
+  blue_identifier=$($OCKAM identity show blue)
 
   # Green isn't enrolled as project member
   unset OCKAM_HOME
@@ -489,7 +489,7 @@ teardown() {
   export OCKAM_HOME=/tmp/ockam/blue
   run $OCKAM node create blue --project /tmp/project.json
   assert_success
-  blue_identifier=$($OCKAM identity show -n blue)
+  blue_identifier=$($OCKAM identity show blue)
 
   # Green isn't enrolled as project member
   unset OCKAM_HOME
@@ -518,12 +518,12 @@ teardown() {
   OCKAM_HOME=/tmp/ockam/green
   run $OCKAM node create green --project /tmp/project.json
   assert_success
-  green_identifier=$($OCKAM identity show -n green)
+  green_identifier=$($OCKAM identity show green)
 
   OCKAM_HOME=/tmp/ockam/blue
   run $OCKAM node create blue --project /tmp/project.json
   assert_success
-  blue_identifier=$($OCKAM identity show -n blue)
+  blue_identifier=$($OCKAM identity show blue)
 
   unset OCKAM_HOME
   run $OCKAM project enroll --member $blue_identifier --attribute role=member
@@ -601,7 +601,7 @@ teardown() {
   export OCKAM_HOME=/tmp/ockam/green
   run $OCKAM node create green --project "/tmp/${project_name}_project.json"
   assert_success
-  green_identifier=$($OCKAM identity show -n green)
+  green_identifier=$($OCKAM identity show green)
 
   export OCKAM_HOME=/tmp/ockam/blue
   run $OCKAM node create blue --project "/tmp/${project_name}_project.json"

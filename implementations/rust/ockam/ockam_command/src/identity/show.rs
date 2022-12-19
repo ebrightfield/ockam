@@ -26,9 +26,8 @@ async fn run_impl(
     ctx: Context,
     (opts, cmd): (CommandGlobalOpts, ShowCommand),
 ) -> crate::Result<()> {
-    let identity_state = opts.state.identities.get(&cmd.name)?;
-    let vault = opts.state.nodes.default()?.config.vault().await?;
-    let identity = identity_state.config.get(&ctx, &vault).await?;
+    let node = opts.state.nodes.get(&cmd.name)?;
+    let identity = node.config.identity(&ctx).await?;
     print_identity(
         &identity,
         cmd.full,
