@@ -27,8 +27,8 @@ async fn run_impl(
     (opts, cmd): (CommandGlobalOpts, ShowCommand),
 ) -> crate::Result<()> {
     let identity_state = opts.state.identities.get(&cmd.name)?;
-    // TODO What is the correct vault to pass in here?
-    let identity = identity_state.config.get(&ctx, &Default::default()).await?;
+    let vault = opts.state.nodes.default()?.config.vault().await?;
+    let identity = identity_state.config.get(&ctx, &vault).await?;
     print_identity(
         &identity,
         cmd.full,

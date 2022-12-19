@@ -29,9 +29,9 @@ async fn run_impl(
             anyhow!("No identities registered on this system!"),
         ));
     }
+    let vault = opts.state.nodes.default()?.config.vault().await?;
     for state in identity_states {
-        // TODO How to acquire the correct vault to pass in here?
-        let identity = state.config.get(&ctx, &Default::default()).await?;
+        let identity = state.config.get(&ctx, &vault).await?;
         print_identity(&identity, cmd.full, &opts.global_args.output_format).await?;
     }
     Ok(())
