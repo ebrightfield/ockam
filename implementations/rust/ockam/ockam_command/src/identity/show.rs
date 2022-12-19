@@ -1,18 +1,17 @@
-use crate::node::NodeOpts;
 use crate::util::output::Output;
-use crate::util::{extract_address_value, node_rpc, Rpc};
-use crate::CommandGlobalOpts;
+use crate::util::node_rpc;
+use crate::{CommandGlobalOpts, OutputFormat};
 use clap::Args;
 use core::fmt::Write;
 use ockam::Context;
 use ockam_api::nodes::models::identity::{LongIdentityResponse, ShortIdentityResponse};
-use ockam_core::api::Request;
 use ockam_identity::change_history::IdentityChangeHistory;
+use ockam_identity::Identity;
+use ockam_vault::Vault;
 
 #[derive(Clone, Debug, Args)]
 pub struct ShowCommand {
-    #[command(flatten)]
-    node_opts: NodeOpts,
+    name: String,
     #[arg(short, long)]
     full: bool,
 }
@@ -27,17 +26,14 @@ async fn run_impl(
     ctx: Context,
     (opts, cmd): (CommandGlobalOpts, ShowCommand),
 ) -> crate::Result<()> {
-    let node_name = extract_address_value(&cmd.node_opts.api_node)?;
-    let mut rpc = Rpc::background(&ctx, &opts, &node_name)?;
-    if cmd.full {
-        let req = Request::post("/node/identity/actions/show/long");
-        rpc.request(req).await?;
-        rpc.parse_and_print_response::<LongIdentityResponse>()?;
-    } else {
-        let req = Request::post("/node/identity/actions/show/short");
-        rpc.request(req).await?;
-        rpc.parse_and_print_response::<ShortIdentityResponse>()?;
-    }
+    let identity_state = opts.state.identities.get(&cmd.name)?;
+    // TODO What is the correct vault to pass in here?
+    let identity = identity_state.config.get(&ctx, &Default::default()).await?;
+    print_identity(
+        &identity,
+        cmd.full,
+        &opts.global_args.output_format,
+    ).await?;
     Ok(())
 }
 
@@ -56,4 +52,26 @@ impl Output for ShortIdentityResponse<'_> {
         write!(w, "{}", self.identity_id)?;
         Ok(w)
     }
+}
+
+pub async fn print_identity(
+    identity: &Identity<Vault>,
+    full: bool,
+    output_format: &OutputFormat,
+) -> crate::Result<()> {
+    let response = if full {
+        let identity = identity.export().await?;
+        LongIdentityResponse::new(identity).output()?
+    } else {
+        let identity = identity.identifier();
+        ShortIdentityResponse::new(identity.to_string()).output()?
+    };
+    let o = match output_format {
+        OutputFormat::Plain => response,
+        OutputFormat::Json => {
+            serde_json::to_string_pretty(&response)?
+        }
+    };
+    println!("{}", o);
+    Ok(())
 }
