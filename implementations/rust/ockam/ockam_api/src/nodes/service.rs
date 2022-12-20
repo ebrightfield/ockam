@@ -457,6 +457,12 @@ impl NodeManagerWorker {
                 self.delete_transport(req, dec).await?.to_vec()?
             }
 
+            // ==*== Identity ==*==
+            // (Delete, ["node", "identity"]) => {
+            //     // TODO Delete an identity (and symlink if it's a default entry),
+            //     //   but return an error if a local node is using that identity as a default
+            // }
+
             // ==*== Credentials ==*==
             (Post, ["node", "credentials", "actions", "get"]) => self
                 .get_credential(req, dec)

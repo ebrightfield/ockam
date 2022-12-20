@@ -268,17 +268,21 @@ impl IdentitiesState {
         let mut identities = vec![];
         for entry in std::fs::read_dir(&self.dir)? {
             let entry = entry?;
-            if entry.file_type()?.is_dir() {
-                let name = entry.file_name().into_string().map_err(|_| {
-                    CliStateError::Io(std::io::Error::new(
-                        std::io::ErrorKind::InvalidData,
-                        "node's directory has an invalid name",
-                    ))
-                })?;
-                identities.push(self.get(&name)?);
+            let filename = entry.file_name().into_string()
+                .map_err(|_| CliStateError::Io(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "node's directory has an invalid name",
+            )))?;
+            if !entry.file_type()?.is_dir() && filename.ends_with(".json") {
+                let identity_name = &filename[0..filename.len()-5];
+                identities.push(self.get(identity_name)?);
             }
         }
         Ok(identities)
+    }
+
+    pub fn delete(&self, identity: &str) -> Result<()> {
+        Ok(())
     }
 
     pub fn default_path(&self) -> Result<PathBuf> {
